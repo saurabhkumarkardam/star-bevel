@@ -34,10 +34,10 @@
     with_items: "{{ network.organizations }}"
     when: network.env.type != 'operator'
 
-  - name: Git pull and push main branch
+  - name: Git pull and push 1-quorum branch
     shell: |
-      git pull origin main
-      git push origin main
+      git pull origin 1-quorum
+      git push origin 1-quorum
 
   # Prepare ports for Indy
   - name: Prepare nodes and clients ports for ambassador
