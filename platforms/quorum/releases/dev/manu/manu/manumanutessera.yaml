@@ -1,0 +1,65 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: manumanutessera
+  namespace: manu-quo
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: manumanutessera
+  interval: 1m
+  chart:
+   spec:
+    chart: platforms/quorum/charts/quorum-tessera-node
+    sourceRef:
+      kind: GitRepository
+      name: flux-quo-1
+      namespace: flux-quo-1
+  values:
+    replicaCount: 1
+    metadata:
+      namespace: manu-quo
+      labels:
+    images:
+      alpineutils: ghcr.io/hyperledger/bevel-alpine:latest
+      tessera: quorumengineering/tessera:hashicorp-21.7.3
+      busybox: busybox
+      mysql: mysql/mysql-server:5.7
+      pullPolicy: IfNotPresent
+    node:
+      name: manu
+      mountPath: /etc/quorum/qdata
+      imagePullSecret: regcred
+      servicetype: ClusterIP
+      ports:
+        tm: 443
+        db: 3306
+      dbname: demodb
+      mysqluser: demouser
+    vault:
+      address: http://dev-vault-public.dev.aws.blockchaincloudpoc-develop.com
+      secretengine: secretsv2
+      tmsecretpath: manu/crypto/manu/tm
+      secretprefix: secretsv2/data/manu/crypto/manu
+      serviceaccountname: vault-auth
+      keyname: quorum
+      role: vault-role
+      authpath: quo-1manu
+      type: hashicorp
+    tessera:
+      dburl: "jdbc:mysql://manu-tessera:3306/demodb"
+      dbusername: demouser
+      url: "https://manu.sau99.dev.aws.blockchaincloudpoc-develop.com:443"
+      clienturl: "http://manu-tessera:8888" #TODO: Enable tls strict for q2t
+      othernodes:
+        - url: https://carr.sau99.dev.aws.blockchaincloudpoc-develop.com
+      tls: "STRICT"
+      trust: "TOFU"
+    proxy:
+      provider: "ambassador"
+      external_url: manu.sau99.dev.aws.blockchaincloudpoc-develop.com
+      clientport: 8888
+    storage:
+      storageclassname: manu-bevel-storageclass
+      storagesize: 1Gi
+      dbstorage: 1Gi
