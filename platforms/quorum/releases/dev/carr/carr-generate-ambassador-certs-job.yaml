@@ -1,0 +1,43 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: carr-generate-ambassador-certs-job
+  namespace: carr-quo
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: carr-generate-ambassador-certs-job
+  interval: 1m
+  chart:
+   spec:
+    chart: platforms/quorum/charts/quorum-tlscerts-gen
+    sourceRef:
+      kind: GitRepository
+      name: flux-quo-1
+      namespace: flux-quo-1
+  values:
+    name: "carr"
+    metadata:
+      namespace: carr-quo
+    image:
+      initContainerName: ghcr.io/hyperledger/bevel-alpine:latest
+      certsContainerName: ghcr.io/hyperledger/bevel-build:jdk8-latest
+      imagePullSecret: regcred
+      pullPolicy: IfNotPresent
+    vault:
+      address: http://dev-vault-public.dev.aws.blockchaincloudpoc-develop.com
+      role: vault-role
+      authpath: quo-1carr
+      serviceaccountname: vault-auth
+      certsecretprefix: secretsv2/data/carr
+      retries: 30
+      type: hashicorp
+    subjects:
+      root_subject: "CN=DLT Root CA,OU=DLT,O=DLT,L=London,C=GB"
+      cert_subject: "CN=DLT Root CA/OU=DLT/O=DLT/L=London/C=GB"
+    opensslVars:
+      domain_name: "carr.sau99.dev.aws.blockchaincloudpoc-develop.com"
+      domain_name_api: "carrapi.sau99.dev.aws.blockchaincloudpoc-develop.com"
+      domain_name_web: "carrweb.sau99.dev.aws.blockchaincloudpoc-develop.com"
+      domain_name_tessera: "carr-tessera.carr-quo"
+      clientport: 8888
