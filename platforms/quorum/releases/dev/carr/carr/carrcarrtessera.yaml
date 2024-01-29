@@ -1,0 +1,65 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: carrcarrtessera
+  namespace: carr-quo
+  annotations:
+    fluxcd.io/automated: "false"
+spec:
+  releaseName: carrcarrtessera
+  interval: 1m
+  chart:
+   spec:
+    chart: platforms/quorum/charts/quorum-tessera-node
+    sourceRef:
+      kind: GitRepository
+      name: flux-quo-1
+      namespace: flux-quo-1
+  values:
+    replicaCount: 1
+    metadata:
+      namespace: carr-quo
+      labels:
+    images:
+      alpineutils: ghcr.io/hyperledger/bevel-alpine:latest
+      tessera: quorumengineering/tessera:hashicorp-21.7.3
+      busybox: busybox
+      mysql: mysql/mysql-server:5.7
+      pullPolicy: IfNotPresent
+    node:
+      name: carr
+      mountPath: /etc/quorum/qdata
+      imagePullSecret: regcred
+      servicetype: ClusterIP
+      ports:
+        tm: 443
+        db: 3306
+      dbname: demodb
+      mysqluser: demouser
+    vault:
+      address: http://dev-vault-public.dev.aws.blockchaincloudpoc-develop.com
+      secretengine: secretsv2
+      tmsecretpath: carr/crypto/carr/tm
+      secretprefix: secretsv2/data/carr/crypto/carr
+      serviceaccountname: vault-auth
+      keyname: quorum
+      role: vault-role
+      authpath: quo-1carr
+      type: hashicorp
+    tessera:
+      dburl: "jdbc:mysql://carr-tessera:3306/demodb"
+      dbusername: demouser
+      url: "https://carr.sau99.dev.aws.blockchaincloudpoc-develop.com:443"
+      clienturl: "http://carr-tessera:8888" #TODO: Enable tls strict for q2t
+      othernodes:
+        - url: https://carr.sau99.dev.aws.blockchaincloudpoc-develop.com
+      tls: "STRICT"
+      trust: "TOFU"
+    proxy:
+      provider: "ambassador"
+      external_url: carr.sau99.dev.aws.blockchaincloudpoc-develop.com
+      clientport: 8888
+    storage:
+      storageclassname: carr-bevel-storageclass
+      storagesize: 1Gi
+      dbstorage: 1Gi
